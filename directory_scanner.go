@@ -8,6 +8,7 @@ import (
 	"log"
 	"bufio"
 	"strings"
+	"crypto/tls"
 )
  
 func main() {
@@ -34,10 +35,15 @@ func main() {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
+// creating a client that skips verifying tls certs
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}	
 
 	for scanner.Scan(){
 
-		resp, err := http.Get(host +scanner.Text())
+		resp, err := client.Get(host +scanner.Text())
 		if err != nil{
 			log.Fatal(err)
 		}
