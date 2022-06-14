@@ -20,9 +20,6 @@ func main() {
     flag.StringVar(&host, "h","", "Specify a host to scan.")
     flag.StringVar(&wordlist, "w","", "Specicify a wordlist to use")
 
-	// flag.Var(&host, "h", "Specify a host to scan.")
-    // flag.Var(&wordlist, "w", "Specicify a wordlist to use")
-
 
     flag.Parse()  // after declaring flags we need to call it
 	if(!(strings.HasSuffix(host,"/"))){
@@ -35,11 +32,14 @@ func main() {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-// creating a client that skips verifying tls certs
+// creating a client that skips verifying tls certs and does not follow redirects
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}	
+	}	
+	client := &http.Client{
+		Transport: tr, 
+		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
+}
 
 	for scanner.Scan(){
 
@@ -48,10 +48,10 @@ func main() {
 			log.Fatal(err)
 		}
 		if resp.StatusCode==200 ||resp.StatusCode ==301||resp.StatusCode==302{
-			fmt.Println(host +scanner.Text())
+			fmt.Print(host +scanner.Text()+" ")
+			fmt.Println(resp.StatusCode)
 		}
 		
-		// fmt.Println(host +scanner.Text())
 	}
 
 	if err := scanner.Err(); err !=nil {
